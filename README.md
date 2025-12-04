@@ -50,20 +50,25 @@ Using this tool against targets without explicit permission is illegal. The auth
 
 ## 🚀 Installation
 
-### 1. Clone or Download
+### Linux/Kali (One Command)
 
 ```bash
-git clone https://github.com/your-repo/trufflepiggie.git
-cd trufflepiggie
+cd trufflepiggie && chmod +x install.sh && ./install.sh
 ```
 
-### 2. Install Dependencies
+### Windows
+
+```cmd
+cd trufflepiggie && install.bat
+```
+
+### Manual (Any OS)
 
 ```bash
-pip install -r requirements.txt
+pip install requests rich pyyaml
 ```
 
-That's it! No complex setup required.
+**That's it!** 3 dependencies, no complex setup.
 
 ## 🔑 GitHub Token Setup
 
