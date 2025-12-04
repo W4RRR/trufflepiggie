@@ -1,0 +1,79 @@
+# TrufflePiggie Configuration
+# ===========================
+# Rate limit info based on GitHub API documentation:
+# https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api
+
+app:
+  name: "TrufflePiggie"
+  version: "1.0.0"
+  author: "@W4R"
+
+network:
+  min_delay: 2.5          # Minimum delay between requests (seconds)
+  max_delay: 4.5          # Maximum delay between requests (seconds)
+  max_retries: 3          # Maximum retry attempts on failure
+  timeout: 15             # Request timeout (seconds)
+  abuse_sleep: 60         # Sleep time on abuse detection (seconds)
+  backoff_base: 60        # Base wait time for exponential backoff (seconds)
+
+# GitHub API Rate Limits (official documentation)
+# ================================================
+# REST API (Core):
+#   - Unauthenticated: 60 requests/hour per IP
+#   - Authenticated (PAT): 5,000 requests/hour per user
+#   - GitHub App (Enterprise): 15,000 requests/hour
+#
+# Search API (CRITICAL - much stricter!):
+#   - Unauthenticated: 10 requests/minute per IP
+#   - Authenticated (PAT): 30 requests/minute per user
+#
+# Secondary limits (abuse detection):
+#   - Max concurrent requests: ~100
+#   - Burst limit: ~900 points/minute (REST)
+
+rate_limits:
+  # Search API limits (most restrictive, applies to our use case)
+  search_authenticated: 30        # requests per minute
+  search_unauthenticated: 10      # requests per minute
+  search_window: 60               # seconds (1 minute)
+  
+  # Core API limits
+  core_authenticated: 5000        # requests per hour
+  core_unauthenticated: 60        # requests per hour
+  core_window: 3600               # seconds (1 hour)
+  
+  # Enterprise limits (GitHub App)
+  enterprise_core: 15000          # requests per hour
+  
+  # Safety thresholds
+  min_remaining_threshold: 2      # Switch token when remaining < this
+  burst_limit: 900                # Max points per minute (unofficial)
+
+search:
+  per_page: 100           # Results per page (max 100 for GitHub)
+  max_results: 1000       # GitHub hard limit per search query
+  max_depth: "day"        # Recursive depth: year -> month -> day
+  default_years: "2015-2024"  # Default year range to search
+
+github:
+  api_base: "https://api.github.com"
+  search_code_endpoint: "/search/code"
+  search_repos_endpoint: "/search/repositories"
+  rate_limit_endpoint: "/rate_limit"
+  gist_search_url: "https://gist.github.com/search"
+
+# Important HTTP headers to monitor:
+# - x-ratelimit-limit: Max requests in current window
+# - x-ratelimit-remaining: Requests remaining (MONITOR THIS!)
+# - x-ratelimit-reset: Unix timestamp when limit resets
+# - Retry-After: Seconds to wait (on 403/429 errors)
+
+output:
+  default_format: "json"
+  available_formats:
+    - "txt"
+    - "json"
+    - "csv"
+    - "html"
+    - "all"
+
