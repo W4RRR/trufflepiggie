@@ -52,6 +52,15 @@ Using this tool against targets without explicit permission is illegal. The auth
 
 ### Linux/Kali (One Command)
 
+First, create and activate a virtual environment:
+
+```bash
+python3 -m venv env
+source env/bin/activate
+```
+
+Then run the installer:
+
 ```bash
 cd trufflepiggie && chmod +x install.sh && ./install.sh
 ```
@@ -174,6 +183,20 @@ trufflehog filesystem results.trufflehog.txt
 
 # Scan with verification
 trufflehog github --repo=https://github.com/user/repo --results=verified,unknown
+```
+
+### Cleaning URLs for TruffleHog
+
+You can use this one-liner to extract clean URLs from TrufflePiggie output:
+
+```bash
+awk '/URL:/ {print $2}' results.txt > results_clean.txt
+```
+
+Then pass them to TruffleHog:
+
+```bash
+cat results_clean.txt | xargs -I {} trufflehog git {} --json --no-update --results=verified
 ```
 
 ## 📁 Output Formats
