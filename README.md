@@ -196,7 +196,11 @@ awk '/URL:/ {print $2}' results.txt > results_clean.txt
 Then pass them to TruffleHog:
 
 ```bash
-cat results_clean.txt | xargs -I {} trufflehog git {} --json --no-update --results=verified
+# All results
+cat results_clean.txt | xargs -I {} trufflehog git {} --no-update | tee final-output
+
+# Verified results only
+cat results_clean.txt | xargs -I {} trufflehog git {} --no-update --results=verified | tee final-output
 ```
 
 ## 📁 Output Formats
