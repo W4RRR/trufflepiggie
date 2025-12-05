@@ -123,10 +123,10 @@ github_pat_third_token_xxxxx
 python trufflepiggie.py -q "example.com" -o results
 
 # Search with specific year range
-python trufflepiggie.py -q "vulnweb.com" -y 2020-2024 -o vulnweb_results
+python trufflepiggie.py -q "example.com" -y 2020-2024 -o example_results
 
 # Export in all formats
-python trufflepiggie.py -q "target.io" -f all -o target_scan
+python trufflepiggie.py -q "example.com" -f all -o example_scan
 ```
 
 ### All Options
@@ -158,16 +158,16 @@ options:
 
 ```bash
 # Search with custom delay range
-python trufflepiggie.py -q "api.target.com" -D 1.2-3.8 -o api_results
+python trufflepiggie.py -q "example.com" -D 1.2-3.8 -o example_results
 
 # Search only repositories, verbose mode
-python trufflepiggie.py -q "internal.corp.com" --repos-only -v -o repos
+python trufflepiggie.py -q "example.com" --repos-only -v -o repos
 
 # Quick search with single token
-python trufflepiggie.py -q "secrets.io" -t ghp_your_token -o quick_scan
+python trufflepiggie.py -q "example.com" -t ghp_your_token -o quick_scan
 
 # Full scan with TruffleHog integration
-python trufflepiggie.py -q "vulnweb.com" -f all --trufflehog-list -o vulnweb
+python trufflepiggie.py -q "example.com" -f all --trufflehog-list -o example_full
 ```
 
 ## 🔗 TruffleHog Integration
