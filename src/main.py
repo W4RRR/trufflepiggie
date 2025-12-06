@@ -43,10 +43,10 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python main.py -q "example.com" -o results.json
-  python main.py -q "vulnweb.com" -y 2020-2024 -f html
-  python main.py -q "api.target.io" -D 1.5-3.5 -f all
-  python main.py -q "password" --gists-only -o secrets.txt -f txt
+  python main.py -q example.com -o results.json
+  python main.py -q example.com -y 2020-2024 -f html
+  python main.py -l subdomains.txt -D 1.5-3.5 -f all
+  python main.py -q password --gists-only -o secrets.txt -f txt
 
 Rate Limit Info:
   GitHub Search API: 30 requests/minute (authenticated)
@@ -56,12 +56,19 @@ For more info: https://github.com/trufflesecurity/trufflehog
         """,
     )
     
-    # Required arguments
+    # Query arguments (one required)
     parser.add_argument(
         "-q", "--query",
         type=str,
-        required=True,
-        help="Domain or search query (e.g., 'example.com', 'filename:password')",
+        required=False,
+        help="Domain or search query (e.g., example.com, filename:password)",
+    )
+    
+    parser.add_argument(
+        "-l", "--list",
+        type=str,
+        required=False,
+        help="File containing list of domains/subdomains (one per line)",
     )
     
     # Output options
@@ -145,6 +152,35 @@ For more info: https://github.com/trufflesecurity/trufflehog
     return parser
 
 
+def load_domains_from_file(filepath: str) -> list[str]:
+    """
+    Load domains from a file (one per line).
+    
+    Args:
+        filepath: Path to file containing domains.
+        
+    Returns:
+        List of domains.
+    """
+    domains = []
+    path = Path(filepath)
+    
+    if not path.exists():
+        raise FileNotFoundError(f"Domain list file not found: {filepath}")
+    
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            # Skip empty lines and comments
+            if line and not line.startswith("#"):
+                domains.append(line)
+    
+    if not domains:
+        raise ValueError(f"No valid domains found in: {filepath}")
+    
+    return domains
+
+
 def main() -> int:
     """
     Main entry point for TrufflePiggie.
@@ -162,12 +198,32 @@ def main() -> int:
     # Load configuration
     config = load_config()
     
-    # Validate query
+    # Validate that either -q or -l is provided
+    if not args.query and not args.list:
+        logger.error("You must provide either -q/--query or -l/--list")
+        return 1
+    
+    if args.query and args.list:
+        logger.error("Use either -q/--query or -l/--list, not both")
+        return 1
+    
+    # Get list of domains to process
     try:
-        query = args.query.strip()
-        if not query:
-            logger.error("Query cannot be empty!")
-            return 1
+        if args.list:
+            domains = load_domains_from_file(args.list)
+            logger.info(f"Loaded [highlight]{len(domains)}[/highlight] domains from {args.list}")
+        else:
+            query = args.query.strip()
+            if not query:
+                logger.error("Query cannot be empty!")
+                return 1
+            domains = [query]
+    except FileNotFoundError as e:
+        logger.error(str(e))
+        return 1
+    except ValueError as e:
+        logger.error(str(e))
+        return 1
     except Exception as e:
         logger.error(f"Invalid query: {e}")
         return 1
@@ -192,7 +248,11 @@ def main() -> int:
         end_year = current_year
         logger.warning(f"End year adjusted to current year: {end_year}")
     
-    logger.info(f"Target: [highlight]{query}[/highlight]")
+    # Show targets
+    if len(domains) == 1:
+        logger.info(f"Target: [highlight]{domains[0]}[/highlight]")
+    else:
+        logger.info(f"Targets: [highlight]{len(domains)} domains[/highlight]")
     logger.info(f"Year range: {start_year} - {end_year}")
     logger.info(f"Output format: {args.format}")
     
@@ -229,11 +289,12 @@ def main() -> int:
         logger.info("  4. Save to config/tokens/my_tokens.txt")
         return 1
     
-    # Initialize output manager
+    # Initialize output manager (use first domain or "multi" for multiple)
+    output_domain = domains[0] if len(domains) == 1 else "multi-domain"
     output_manager = OutputManager(
         output_path=args.output,
         output_format=args.format,
-        domain=query,
+        domain=output_domain,
     )
     
     # Create scan state and setup signal handlers
@@ -246,7 +307,7 @@ def main() -> int:
     search_gists = not args.repos_only and not args.code_only
     
     try:
-        # Initialize and run search engine
+        # Initialize search engine
         engine = SearchEngine(
             auth_manager=auth_manager,
             http_client=http_client,
@@ -255,23 +316,41 @@ def main() -> int:
         )
         engine.state = state
         
-        # Run main search
-        state = engine.search_domain(
-            domain=query,
-            start_year=start_year,
-            end_year=end_year,
-            search_repos=search_repos,
-            search_gists=search_code,
-        )
-        
-        # Search gists separately if requested
-        if search_gists and not state.interrupted:
-            gist_engine = GistSearchEngine(
-                http_client=http_client,
-                output_manager=output_manager,
-                state=state,
+        # Process each domain
+        for idx, domain in enumerate(domains):
+            if state.interrupted:
+                break
+            
+            # Show progress for multiple domains
+            if len(domains) > 1:
+                logger.info("")
+                logger.highlight(f"[{idx + 1}/{len(domains)}] Scanning: {domain}")
+            
+            # Run main search for this domain
+            state = engine.search_domain(
+                domain=domain,
+                start_year=start_year,
+                end_year=end_year,
+                search_repos=search_repos,
+                search_gists=search_code,
             )
-            gist_engine.search_gists(query)
+            
+            # Search gists separately if requested
+            if search_gists and not state.interrupted:
+                gist_engine = GistSearchEngine(
+                    http_client=http_client,
+                    output_manager=output_manager,
+                    state=state,
+                )
+                gist_engine.search_gists(domain)
+            
+            # Brief pause between domains to respect rate limits
+            if len(domains) > 1 and idx < len(domains) - 1 and not state.interrupted:
+                import time
+                import random
+                wait_time = random.uniform(2.0, 5.0)
+                logger.info(f"Waiting {wait_time:.1f}s before next domain (rate limit protection)...")
+                time.sleep(wait_time)
         
         # Finalize output
         output_files = output_manager.finalize(

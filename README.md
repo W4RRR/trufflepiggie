@@ -119,20 +119,23 @@ github_pat_third_token_xxxxx
 ### Basic Usage
 
 ```bash
-# Search for a domain
-python trufflepiggie.py -q "example.com" -o results
+# Search for a domain (no quotes needed)
+python trufflepiggie.py -q example.com -o results
 
 # Search with specific year range
-python trufflepiggie.py -q "example.com" -y 2020-2024 -o example_results
+python trufflepiggie.py -q example.com -y 2020-2024 -o example_results
 
 # Export in all formats
-python trufflepiggie.py -q "example.com" -f all -o example_scan
+python trufflepiggie.py -q example.com -f all -o example_scan
+
+# Search multiple domains from a file
+python trufflepiggie.py -l subdomains.txt -o multi_results
 ```
 
 ### All Options
 
 ```
-usage: trufflepiggie [-h] -q QUERY [-o OUTPUT] [-f {txt,json,csv,html,all}]
+usage: trufflepiggie [-h] [-q QUERY] [-l LIST] [-o OUTPUT] [-f {txt,json,csv,html,all}]
                      [-y YEARS] [--repos-only] [--gists-only] [--code-only]
                      [-D DELAY] [-t TOKEN] [-v] [--no-banner] [--trufflehog-list]
 
@@ -140,7 +143,8 @@ usage: trufflepiggie [-h] -q QUERY [-o OUTPUT] [-f {txt,json,csv,html,all}]
 
 options:
   -h, --help            Show this help message and exit
-  -q, --query QUERY     Domain or search query (e.g., 'example.com')
+  -q, --query QUERY     Domain or search query (e.g., example.com)
+  -l, --list LIST       File with list of domains/subdomains (one per line)
   -o, --output OUTPUT   Output file path (without extension). Default: 'results'
   -f, --format FORMAT   Output format: txt, json, csv, html, all. Default: json
   -y, --years YEARS     Year range (e.g., '2020-2024' or '2023'). Default: 2015-now
@@ -154,21 +158,40 @@ options:
   --trufflehog-list     Export a simple URL list for TruffleHog
 ```
 
+> **Note:** Use `-q` for a single domain or `-l` for multiple domains from a file. Rate limits are automatically managed between domains.
+
 ### Examples
 
 ```bash
 # Search with custom delay range
-python trufflepiggie.py -q "example.com" -D 1.2-3.8 -o example_results
+python trufflepiggie.py -q example.com -D 1.2-3.8 -o example_results
 
 # Search only repositories, verbose mode
-python trufflepiggie.py -q "example.com" --repos-only -v -o repos
+python trufflepiggie.py -q example.com --repos-only -v -o repos
 
 # Quick search with single token
-python trufflepiggie.py -q "example.com" -t ghp_your_token -o quick_scan
+python trufflepiggie.py -q example.com -t ghp_your_token -o quick_scan
 
 # Full scan with TruffleHog integration
-python trufflepiggie.py -q "example.com" -f all --trufflehog-list -o example_full
+python trufflepiggie.py -q example.com -f all --trufflehog-list -o example_full
+
+# Scan multiple subdomains from file
+python trufflepiggie.py -l subdomains.txt -f all --trufflehog-list -o multi_scan
 ```
+
+### Subdomain List Format
+
+Create a text file with one domain per line:
+
+```text
+# subdomains.txt
+api.example.com
+dev.example.com
+staging.example.com
+admin.example.com
+```
+
+Lines starting with `#` are treated as comments and ignored.
 
 ## 🔗 TruffleHog Integration
 
