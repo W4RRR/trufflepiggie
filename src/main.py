@@ -149,6 +149,13 @@ For more info: https://github.com/trufflesecurity/trufflehog
         help="Also export a simple URL list for TruffleHog",
     )
     
+    # Update tool
+    parser.add_argument(
+        "--update",
+        action="store_true",
+        help="Update TrufflePiggie from git (preserves tokens)",
+    )
+    
     return parser
 
 
@@ -181,6 +188,73 @@ def load_domains_from_file(filepath: str) -> list[str]:
     return domains
 
 
+def update_tool() -> int:
+    """
+    Update TrufflePiggie from git while preserving tokens.
+    
+    Returns:
+        Exit code (0 for success, 1 for error).
+    """
+    import subprocess
+    import shutil
+    import tempfile
+    
+    project_root = Path(__file__).parent.parent
+    tokens_dir = project_root / "config" / "tokens"
+    
+    logger.info("🔄 Updating TrufflePiggie...")
+    
+    # Backup tokens if they exist
+    backup_dir = None
+    if tokens_dir.exists():
+        backup_dir = Path(tempfile.mkdtemp())
+        logger.info("📦 Backing up tokens...")
+        shutil.copytree(tokens_dir, backup_dir / "tokens")
+    
+    try:
+        # Run git pull
+        logger.info("📥 Pulling latest changes from git...")
+        result = subprocess.run(
+            ["git", "pull"],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+        )
+        
+        if result.returncode != 0:
+            logger.error(f"Git pull failed: {result.stderr}")
+            return 1
+        
+        logger.info(result.stdout.strip() if result.stdout.strip() else "Already up to date.")
+        
+        # Restore tokens
+        if backup_dir:
+            logger.info("🔑 Restoring tokens...")
+            if tokens_dir.exists():
+                shutil.rmtree(tokens_dir)
+            shutil.copytree(backup_dir / "tokens", tokens_dir)
+            shutil.rmtree(backup_dir)
+        
+        logger.success("✅ Update completed successfully!")
+        return 0
+        
+    except FileNotFoundError:
+        logger.error("Git is not installed or not in PATH")
+        return 1
+    except Exception as e:
+        logger.error(f"Update failed: {e}")
+        # Try to restore tokens on failure
+        if backup_dir and backup_dir.exists():
+            try:
+                if not tokens_dir.exists():
+                    tokens_dir.mkdir(parents=True)
+                shutil.copytree(backup_dir / "tokens", tokens_dir, dirs_exist_ok=True)
+                shutil.rmtree(backup_dir)
+            except Exception:
+                logger.warning(f"Token backup saved at: {backup_dir}")
+        return 1
+
+
 def main() -> int:
     """
     Main entry point for TrufflePiggie.
@@ -190,6 +264,11 @@ def main() -> int:
     """
     parser = create_parser()
     args = parser.parse_args()
+    
+    # Handle update command
+    if args.update:
+        logger.print_banner()
+        return update_tool()
     
     # Display banner
     if not args.no_banner:

@@ -79,6 +79,16 @@ pip install requests rich pyyaml
 
 **That's it!** 3 dependencies, no complex setup.
 
+### 🔄 Updating
+
+Update TrufflePiggie while preserving your tokens:
+
+```bash
+python trufflepiggie.py --update
+```
+
+This will run `git pull` and automatically backup/restore your `config/tokens/` directory.
+
 ## 🔑 GitHub Token Setup
 
 TrufflePiggie requires at least one GitHub Personal Access Token to work.
@@ -156,6 +166,7 @@ options:
   -v, --verbose         Enable verbose output
   --no-banner           Don't display ASCII art banner
   --trufflehog-list     Export a simple URL list for TruffleHog
+  --update              Update TrufflePiggie from git (preserves tokens)
 ```
 
 > **Note:** Use `-q` for a single domain or `-l` for multiple domains from a file. Rate limits are automatically managed between domains.
