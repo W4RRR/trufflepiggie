@@ -367,3 +367,44 @@ This project is licensed under the MIT License.
   <b>Happy Hunting! 🐷🔍</b>
 </p>
 
+## 💰 Support / Donate (Bitcoin)
+
+If you find this project useful and want to support its development, you can tip the author via **Bitcoin Silent Payments (BIP352)**:
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9768054a-19c0-48fb-b799-090aad40f82c"
+       alt="Bitcoin Silent Payments QR Code"
+       width="180">
+</p>
+
+**Silent Payments address:** 
+```
+sp1qqdsmxsvc6payn6kxmyjuwk6zcjcq7vpgkek7tf3y78tfaksahacxcqenuvqptufl7a6gwtwe5zdsf4pu578ykfdtxp789ca4nxgcawp4057852s6
+```
+
+Silent Payments let the recipient publish **one static address** for donations, while each payment is derived into a **fresh, unique on-chain output** (so the static address itself doesn't show up on-chain), improving privacy for both sides.
+
+### Wallet compatibility (common options)
+
+To donate to an `sp1q...` address (Silent Payments v0), you need a wallet that supports **sending to Silent Payments / BIP352**.
+
+Common wallets with Silent Payments *sending* support include:
+- **Cake Wallet** (mobile; can also receive Silent Payments)
+- **BlueWallet** (mobile; supports *sending* to Silent Payments)
+- **Wasabi Wallet** (desktop; supports *sending* to Silent Payments)
+- **Sparrow Wallet** (desktop; *send-only* Silent Payments support)
+- **BitBox02 + BitBoxApp** (hardware wallet flow; supports *sending* to Silent Payments)
+
+For the most up-to-date list of wallets (and whether they support send/receive), check the [Silent Payments wallet support tracker](https://silentpayments.xyz/wallets/).
+
+---
+
+<p align="center">
+  <strong>Made with ❤️ for the security community</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/W4RRR/subtake/stargazers">⭐ Star this repo</a> •
+  <a href="https://github.com/W4RRR/subtake/issues">🐛 Report Bug</a> •
+  <a href="https://github.com/W4RRR/subtake/pulls">🔀 Submit PR</a>
+</p>
