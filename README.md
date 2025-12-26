@@ -239,7 +239,7 @@ cat results_clean.txt | xargs -I {} trufflehog git {} --no-update --results=veri
 
 ### 🚀 All-In-One Pipeline
 
-Este oneliner combina **TrufflePiggie + TruffleHog** en un solo comando de pipeline, ejecutando toda la cadena de escaneo de forma automatizada:
+This oneliner combines **TrufflePiggie + TruffleHog** into a single pipeline command, automating the entire scanning chain:
 
 ```bash
 trufflepiggie.py -q example.com -y 2019-2025 -v -D 3.9-5.8 -f txt -o output-1.txt \
@@ -247,18 +247,18 @@ trufflepiggie.py -q example.com -y 2019-2025 -v -D 3.9-5.8 -f txt -o output-1.tx
 && cat output-1_clean.txt | xargs -I {} trufflehog git {} --results=verified --no-update | tee final_output.txt
 ```
 
-**¿Qué hace?**
-1. **TrufflePiggie** busca repositorios y gists relacionados con el dominio objetivo en GitHub
-2. **awk** extrae las URLs limpias del output
-3. **TruffleHog** escanea cada repositorio encontrado en busca de secretos verificados
+**What does it do?**
+1. **TrufflePiggie** searches for repositories and gists related to the target domain on GitHub
+2. **awk** extracts clean URLs from the output
+3. **TruffleHog** scans each discovered repository for verified secrets
 
-**Requisitos:**
-- ⚠️ [TruffleHog](https://github.com/trufflesecurity/trufflehog) debe estar instalado
-- ⚠️ Ambas herramientas (`trufflepiggie.py` y `trufflehog`) deben estar en el PATH
+**Requirements:**
+- ⚠️ [TruffleHog](https://github.com/trufflesecurity/trufflehog) must be installed
+- ⚠️ Both tools (`trufflepiggie.py` and `trufflehog`) must be in your PATH
 
-**Sobre el delay `-D 3.9-5.8`:**
+**About the `-D 3.9-5.8` delay:**
 
-> 🧪 Los rangos de delay `3.9-5.8` segundos han sido **testeados positivamente en entornos reales** de auditorías web y programas de bug bounty, evitando bloqueos por rate limiting de GitHub. Este rango ofrece un buen equilibrio entre velocidad y evasión de detección.
+> 🧪 The delay range `3.9-5.8` seconds has been **positively tested in real-world environments** including web security audits and bug bounty programs, successfully avoiding GitHub rate limit blocks. This range offers a good balance between speed and detection evasion.
 
 ## 📁 Output Formats
 
