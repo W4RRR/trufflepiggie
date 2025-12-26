@@ -237,6 +237,29 @@ cat results_clean.txt | xargs -I {} trufflehog git {} --no-update | tee final-ou
 cat results_clean.txt | xargs -I {} trufflehog git {} --no-update --results=verified | tee final-output
 ```
 
+### 🚀 All-In-One Pipeline
+
+Este oneliner combina **TrufflePiggie + TruffleHog** en un solo comando de pipeline, ejecutando toda la cadena de escaneo de forma automatizada:
+
+```bash
+trufflepiggie.py -q example.com -y 2019-2025 -v -D 3.9-5.8 -f txt -o output-1.txt \
+&& awk '/URL:/ {print $2}' output-1.txt > output-1_clean.txt \
+&& cat output-1_clean.txt | xargs -I {} trufflehog git {} --results=verified --no-update | tee final_output.txt
+```
+
+**¿Qué hace?**
+1. **TrufflePiggie** busca repositorios y gists relacionados con el dominio objetivo en GitHub
+2. **awk** extrae las URLs limpias del output
+3. **TruffleHog** escanea cada repositorio encontrado en busca de secretos verificados
+
+**Requisitos:**
+- ⚠️ [TruffleHog](https://github.com/trufflesecurity/trufflehog) debe estar instalado
+- ⚠️ Ambas herramientas (`trufflepiggie.py` y `trufflehog`) deben estar en el PATH
+
+**Sobre el delay `-D 3.9-5.8`:**
+
+> 🧪 Los rangos de delay `3.9-5.8` segundos han sido **testeados positivamente en entornos reales** de auditorías web y programas de bug bounty, evitando bloqueos por rate limiting de GitHub. Este rango ofrece un buen equilibrio entre velocidad y evasión de detección.
+
 ## 📁 Output Formats
 
 ### JSON (Default)
@@ -367,44 +390,3 @@ This project is licensed under the MIT License.
   <b>Happy Hunting! 🐷🔍</b>
 </p>
 
-## 💰 Support / Donate (Bitcoin)
-
-If you find this project useful and want to support its development, you can tip the author via **Bitcoin Silent Payments (BIP352)**:
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/9768054a-19c0-48fb-b799-090aad40f82c"
-       alt="Bitcoin Silent Payments QR Code"
-       width="180">
-</p>
-
-**Silent Payments address:** 
-```
-sp1qqdsmxsvc6payn6kxmyjuwk6zcjcq7vpgkek7tf3y78tfaksahacxcqenuvqptufl7a6gwtwe5zdsf4pu578ykfdtxp789ca4nxgcawp4057852s6
-```
-
-Silent Payments let the recipient publish **one static address** for donations, while each payment is derived into a **fresh, unique on-chain output** (so the static address itself doesn't show up on-chain), improving privacy for both sides.
-
-### Wallet compatibility (common options)
-
-To donate to an `sp1q...` address (Silent Payments v0), you need a wallet that supports **sending to Silent Payments / BIP352**.
-
-Common wallets with Silent Payments *sending* support include:
-- **Cake Wallet** (mobile; can also receive Silent Payments)
-- **BlueWallet** (mobile; supports *sending* to Silent Payments)
-- **Wasabi Wallet** (desktop; supports *sending* to Silent Payments)
-- **Sparrow Wallet** (desktop; *send-only* Silent Payments support)
-- **BitBox02 + BitBoxApp** (hardware wallet flow; supports *sending* to Silent Payments)
-
-For the most up-to-date list of wallets (and whether they support send/receive), check the [Silent Payments wallet support tracker](https://silentpayments.xyz/wallets/).
-
----
-
-<p align="center">
-  <strong>Made with ❤️ for the security community</strong>
-</p>
-
-<p align="center">
-  <a href="https://github.com/W4RRR/subtake/stargazers">⭐ Star this repo</a> •
-  <a href="https://github.com/W4RRR/subtake/issues">🐛 Report Bug</a> •
-  <a href="https://github.com/W4RRR/subtake/pulls">🔀 Submit PR</a>
-</p>
