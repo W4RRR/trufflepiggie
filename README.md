@@ -237,22 +237,51 @@ cat results_clean.txt | xargs -I {} trufflehog git {} --no-update | tee final-ou
 cat results_clean.txt | xargs -I {} trufflehog git {} --no-update --results=verified | tee final-output
 ```
 
-### 🚀 All-In-One Pipeline
+### 🚀 All-In-One Pipeline (Verified-only, low-noise)
 
-This oneliner combines **TrufflePiggie + TruffleHog** into a single pipeline command, automating the entire scanning chain:
+This one-liner chains **TrufflePiggie → URL extraction → TruffleHog** and prints **verified secrets only**.
 
 ```bash
 trufflepiggie.py -q example.com -y 2019-2025 -v -D 3.9-5.8 -f txt -o output-1.txt \
 && awk '/URL:/ {print $2}' output-1.txt > output-1_clean.txt \
-&& cat output-1_clean.txt | xargs -I {} trufflehog git {} --results=verified --no-update | tee final_output.txt
+&& xargs -a output-1_clean.txt -r -I {} trufflehog git --no-update --results=verified --log-level=-1 --fail {} \
+| tee final_output.txt
 ```
 
-**What does it do?**
-1. **TrufflePiggie** searches for repositories and gists related to the target domain on GitHub
-2. **awk** extracts clean URLs from the output
-3. **TruffleHog** scans each discovered repository for verified secrets
+**What it does:**
+
+1. Runs **TrufflePiggie** to discover GitHub repos and gists related to the target domain
+2. Extracts clean repository/gist URLs with **awk**
+3. Scans each URL with **TruffleHog**, outputting **verified results only** (`--results=verified`)
+
+**Why these flags?**
+
+| Flag | Purpose |
+|------|---------|
+| `-r` (xargs) | Do not run TruffleHog if the URL list is empty |
+| `--results=verified` | Only print secrets that TruffleHog successfully verified as live |
+| `--log-level=-1` | Silence TruffleHog logs (keeps output focused on findings) |
+| `--fail` | Return exit code **183** if any results are found (useful for CI pipelines) |
+
+> 💡 **Tip (CI/CD):** If you need the pipeline to fail when TruffleHog returns 183, run it under a shell with `pipefail` enabled (e.g., `set -o pipefail` in bash), otherwise `tee` may mask the exit code.
+
+#### 🧹 Clean Output Variant (No Banner Spam)
+
+Want to keep TruffleHog's human-readable output (the "✅ Found verified result…" lines) but remove the repetitive pig banner that appears for each scanned repo? Use `grep -vF` to filter it out:
+
+```bash
+trufflepiggie.py -q "example.com" -y 2018-2025 -v -D 3.9-5.8 -f txt -o trufflepiggie-1.txt \
+&& awk '/URL:/ {print $2}' trufflepiggie-1.txt > trufflepiggie-1_clean.txt \
+&& xargs -a trufflepiggie-1_clean.txt -r -I {} sh -c \
+'trufflehog git --no-update --results=verified --log-level=-1 --fail "$1" 2>&1 | grep -vF "🐷🔑🐷  TruffleHog. Unearth your secrets. 🐷🔑🐷"' _ {} \
+| sed '/^[[:space:]]*$/d' \
+| tee trufflehog-final.txt
+```
+
+**Result:** All repetitive banners and empty lines disappear, leaving only actual findings (if any). Clean and focused output.
 
 **Requirements:**
+
 - ⚠️ [TruffleHog](https://github.com/trufflesecurity/trufflehog) must be installed
 - ⚠️ Both tools (`trufflepiggie.py` and `trufflehog`) must be in your PATH
 
